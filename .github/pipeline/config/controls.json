@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "description": "Allowlisted control IDs. match decides which IDs apply to a diff. review is the guidance the sensors see in their prompt. The gate does not read review.",
+  "controls": [
+    {
+      "id": "CC8.1",
+      "framework": "SOC 2",
+      "label": "Change management",
+      "review": "Use this to describe the change itself: what behavior moved, and whether a reviewer can see the impact from the diff.",
+      "match": { "anyPath": true }
+    },
+    {
+      "id": "CC6.1",
+      "framework": "SOC 2",
+      "label": "Logical and physical access",
+      "review": "Use this when the diff changes who can authenticate or what they are allowed to do. Look for session handling, role checks, and untested deny paths.",
+      "match": { "pathIncludes": ["auth", "iam", "payments"] }
+    },
+    {
+      "id": "A.8.32",
+      "framework": "ISO 27001",
+      "label": "Change management",
+      "review": "Use this when the diff should be traceable as a planned change. Name the files that carry it and whether the scope is obvious.",
+      "match": { "anyPath": true }
+    },
+    {
+      "id": "A.8.28",
+      "framework": "ISO 27001",
+      "label": "Secure coding",
+      "review": "Use this when application code changes. Look for missing validation, unsafe defaults, and credential material in source.",
+      "match": { "pathIncludes": ["auth", "iam", "payments", "src"] }
+    },
+    {
+      "id": "CM-3",
+      "framework": "NIST 800-53",
+      "label": "Configuration change control",
+      "review": "Use this when the diff changes configuration, infrastructure, or application behavior. Name what used to be controlled and what the diff changes.",
+      "match": { "anyPath": true }
+    },
+    {
+      "id": "CM-4",
+      "framework": "NIST 800-53",
+      "label": "Impact analysis",
+      "review": "Use this when the diff can affect security or operations. Say who or what is affected and what a reviewer should verify before shipping.",
+      "match": { "anyPath": true }
+    },
+    {
+      "id": "A008",
+      "framework": "AIUC-1",
+      "label": "Prevent leakage of credentials and secrets",
+      "review": "Use this when added lines contain credentials, keys, or tokens. Report material that looks like a secret even if a pattern check might have missed it.",
+      "match": { "categories": ["secrets"] }
+    },
+    {
+      "id": "B010.1",
+      "framework": "AIUC-1",
+      "label": "Authentication and session patterns",
+      "review": "Use this for authentication and session changes. Look for how a session is created, how a token is checked, and what happens when the caller is unauthenticated.",
+      "match": { "pathIncludes": ["auth", "iam"] }
+    },
+    {
+      "id": "B010.2",
+      "framework": "AIUC-1",
+      "label": "Authorization and common vuln patterns",
+      "review": "Use this for authorization and common vulnerability patterns in auth, IAM, or payments. Look for checks that fail open, missing role gates, and unsafe handling of user input.",
+      "match": { "pathIncludes": ["auth", "iam", "payments"] }
+    },
+    {
+      "id": "B010.3",
+      "framework": "AIUC-1",
+      "label": "Safe dependency specification",
+      "review": "Use this when a manifest or lockfile adds a dependency. Name the package and say whether a human must confirm it is the intended, existing package.",
+      "match": { "pathIncludes": ["package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lock"] }
+    }
+  ]
+}

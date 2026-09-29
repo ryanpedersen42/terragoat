@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "description": "Release gate rules. Worst matching decision wins.",
+  "rules": [
+    {
+      "id": "R-B010.3-HEURISTIC",
+      "decision": "BLOCK",
+      "when": { "heuristicControl": "B010.3" }
+    },
+    {
+      "id": "R-A008-HEURISTIC",
+      "decision": "BLOCK",
+      "when": { "heuristicControl": "A008" }
+    },
+    {
+      "id": "R-AGENT-CRITICAL-REVIEW",
+      "decision": "HUMAN_REVIEW",
+      "when": { "agentOnlySeverity": "critical" }
+    },
+    {
+      "id": "R-SENSITIVE-NO-TESTS",
+      "decision": "HUMAN_REVIEW",
+      "when": { "sensitivePathWithoutTests": true }
+    },
+    {
+      "id": "R-LOW-CONFIDENCE-HIGH",
+      "decision": "HUMAN_REVIEW",
+      "when": { "highSeverityLowConfidence": 0.5 }
+    },
+    {
+      "id": "R-INVALID-OUTPUT",
+      "decision": "HUMAN_REVIEW",
+      "when": { "category": "invalid_agent_output" }
+    },
+    {
+      "id": "R-TOOL-ESCAPE",
+      "decision": "HUMAN_REVIEW",
+      "when": { "outsideGrantedToolset": true }
+    },
+    {
+      "id": "R-EU-AI-ACT",
+      "decision": "HUMAN_REVIEW",
+      "when": { "possibleSubstantialModification": true }
+    }
+  ]
+}

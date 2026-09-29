@@ -1,0 +1,30 @@
+{
+  "name": "ai-change-assurance",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Report-only AI change assurance pipeline using the Cursor TypeScript SDK.",
+  "type": "module",
+  "bin": {
+    "ai-change-assurance": "./bin/ai-change-assurance.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "assure": "tsx src/index.ts",
+    "test": "tsx --test test/*.test.ts",
+    "demo:a": "tsx src/index.ts --fixture a --offline",
+    "demo:b": "tsx src/index.ts --fixture b --offline",
+    "demo:c": "tsx src/index.ts --fixture c --offline",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.5",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  }
+}
