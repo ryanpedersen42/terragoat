@@ -1,16 +1,25 @@
-name: build
+name: checkov
+
+# Scans the Terraform tree at the pull request head. Checkov reads the
+# directory, so this job covers every cloud folder without those files
+# needing to appear in the diff.
 on:
-  pull_request
+  pull_request:
+  workflow_dispatch:
+
 jobs:
   checkov-job:
     runs-on: ubuntu-latest
     name: checkov-action
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Run Checkov action
         id: checkov
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@v12.3126.0
         with:
           directory: terraform/
+          quiet: true
+          output_format: cli
+          output_file_path: console
