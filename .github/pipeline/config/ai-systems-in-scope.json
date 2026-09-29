@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "description": "Paths that, if changed, may constitute an EU AI Act substantial modification of an in-scope AI system. This is a process flag, not a linter error.",
+  "paths": [
+    "src/model/",
+    "src/models/",
+    "src/ai/",
+    "ml/",
+    "models/",
+    "prompts/",
+    "eval/",
+    "evals/"
+  ]
+}

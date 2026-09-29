@@ -1,0 +1,122 @@
+# Compliance gate for pull requests in this repository.
+# The CLI lives in .github/pipeline. --cwd is the repository root, so the
+# diff is this repo's pull request, not the pipeline directory.
+# BLOCK fails the job (branch protection can require this check).
+# HUMAN_REVIEW stays green unless FAIL_ON is review.
+# Fork pull requests do not receive secrets; the heuristic gate still runs.
+# Do not switch this to pull_request_target.
+# AI involvement is assumed. The human-authored label records an attestation and does not change the gate.
+# npm ci installs devDependencies. The CLI needs tsx, which is one of them.
+
+name: Compliance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  # block | review | never
+  FAIL_ON: block
+
+jobs:
+  assure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: .github/pipeline/package-lock.json
+
+      - name: Install
+        working-directory: .github/pipeline
+        run: npm ci
+
+      - name: Run assurance CLI
+        working-directory: .github/pipeline
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          HUMAN_AUTHORED: ${{ contains(github.event.pull_request.labels.*.name, 'human-authored') }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PR_BASE" ]; then
+            echo "::error::No base SHA. Run this workflow on pull_request."
+            exit 1
+          fi
+          if ! git -C "$GITHUB_WORKSPACE" rev-parse --verify --quiet "$PR_BASE^{commit}" >/dev/null; then
+            echo "::error::Base $PR_BASE is not in the checkout. Use actions/checkout with fetch-depth: 0."
+            exit 1
+          fi
+          args=(
+            --cwd "$GITHUB_WORKSPACE"
+            --base "$PR_BASE"
+            --head "$PR_HEAD"
+            --evidence-dir "$GITHUB_WORKSPACE/assurance-evidence"
+            --fail-on "$FAIL_ON"
+          )
+          if [ "$HUMAN_AUTHORED" = "true" ]; then
+            args+=(--human-authored)
+          fi
+          npx ai-change-assurance "${args[@]}"
+
+      - name: Publish job summary
+        if: always()
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(assurance-evidence/*/summary.md)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No evidence bundle was written." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          cat "${files[@]}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on pull request
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(assurance-evidence/*/summary.md)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No evidence bundle was written; skipping PR comment."
+            exit 0
+          fi
+          marker="<!-- ai-change-assurance -->"
+          body_file="$(mktemp)"
+          {
+            echo "$marker"
+            echo
+            cat "${files[@]}"
+          } > "$body_file"
+          mapfile -t ids < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.body | startswith(\"${marker}\")) | .id")
+          existing="${ids[0]:-}"
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${existing}" \
+              --raw-field body="$(cat "$body_file")" >/dev/null
+          else
+            gh pr comment "$PR_NUMBER" --body-file "$body_file"
+          fi
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-change-assurance
+          path: assurance-evidence/
+          if-no-files-found: ignore

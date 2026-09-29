@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "description": "Compliance sensor model pin. The id must be a Cursor catalog id. Every parameter that catalog entry advertises must be listed under params with an allowed value. If the id is missing from the catalog, or the run resolves a different model or parameters, the compliance sensor is skipped and its findings are discarded.",
+  "compliance": {
+    "id": "composer-2.5",
+    "params": [{ "id": "fast", "value": "false" }]
+  }
+}
